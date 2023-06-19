@@ -140,8 +140,17 @@ export async function checkService(job) {
     const syncState = await api.rpc.system.syncState()
     const finalizedBlockHash = await api.rpc.chain.getFinalizedHead()
     const { number: finalizedBlock } = await api.rpc.chain.getHeader(finalizedBlockHash)
-    // const blockDrift = syncState.currentBlock.toNumber() - finalizedBlock
     const version = await api.rpc.system.version()
+
+    // check if node is archive by querying a random block 
+    const randBlockNumber =  Math.floor(Math.random() * (finalizedBlock / 2)) + 1;
+    const block_hash = await api.rpc.chain.getBlockHash(randBlockNumber)
+    const runtimeVersion = await api.rpc.state.getRuntimeVersion(block_hash)
+    const archiveState = {
+      randomBlock: randBlockNumber,
+      specVersion: runtimeVersion.specVersion.toString()
+    }
+    
     const timing = end - start
     // console.debug(health.toString())
     result = {
@@ -166,6 +175,7 @@ export async function checkService(job) {
         networkState,
         syncState,
         finalizedBlock,
+        archiveState,
         version,
         // peerCount,
         performance: timing,
