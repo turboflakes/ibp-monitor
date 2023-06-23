@@ -12,6 +12,7 @@ const { ExpressAdapter } = pkg1
 import * as pkg2 from '@bull-board/api'
 const { createBullBoard } = pkg2
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter.js'
+import IORedis from 'ioredis';
 // import axios from 'axios'
 
 import { asyncForeach } from './lib/utils.js'
@@ -34,7 +35,7 @@ const qOpts = {
   //   host: "localhost",
   //   port: 6379
   // }
-  connection: cfg.redis,
+  connection: new IORedis(cfg.redis)
 }
 
 const jobs = [

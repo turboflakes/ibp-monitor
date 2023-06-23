@@ -24,6 +24,9 @@ const config = {
     // hostname = docker service name
     host: 'ibp-redis',
     port: 6379,
+    username: "",
+    password: 'ibp_redis_password',
+    maxRetriesPerRequest: null,
   },
   httpPort: HTTP_PORT,
   listenPort: GOSSIP_PORT,
