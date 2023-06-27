@@ -24,6 +24,9 @@ const config = {
     // hostname = docker service name
     host: 'ibp-redis',
     port: 6379,
+    username: "",
+    password: 'ibp_redis_password',
+    maxRetriesPerRequest: null,
   },
   httpPort: HTTP_PORT,
   listenPort: GOSSIP_PORT,
@@ -32,15 +35,11 @@ const config = {
   updateInterval: 5 * 60 * 1000, // 5 mins, as milliseconds
   bootstrapPeers: [
     // metaspan:dns
-    '/dnsaddr/ibp-bootstrap.metaspan.io/tcp/30000/p2p/12D3KooWK88CwRP1eHSoHheuQbXFcQrQMni2cgVDmB8bu9NtaqVu',
-    // helikon:ip4
-    '/ip4/78.181.100.160/tcp/30000/p2p/12D3KooWFZzcMsKumdpNyTKtivcGPukPfQAtCaW5o8qinFzSzHuf',
+    '/dns4/ibp-monitor.metaspan.io/tcp/30000/p2p/12D3KooWK88CwRP1eHSoHheuQbXFcQrQMni2cgVDmB8bu9NtaqVu',
     // helikon:dns
-    '/dnsaddr/ibp-monitor.helikon.io/tcp/30000/p2p/12D3KooWFZzcMsKumdpNyTKtivcGPukPfQAtCaW5o8qinFzSzHuf',
-    // turboflakes:ip4
-    '/ip4/172.104.248.97/tcp/30000/p2p/12D3KooWQv2KCogXS3qmJL1ND1gPMzmRwiGAtEAEsMSMmW4G9L4c',
+    '/dns4/ibp-monitor.helikon.io/tcp/30000/p2p/12D3KooWFZzcMsKumdpNyTKtivcGPukPfQAtCaW5o8qinFzSzHuf',
     // turboflakes:dns
-    '/dnsaddr/ibp-monitor.turboflakes.io/tcp/30000/p2p/12D3KooWQv2KCogXS3qmJL1ND1gPMzmRwiGAtEAEsMSMmW4G9L4c',
+    '/dns4/ibp-monitor.turboflakes.io/tcp/30000/p2p/12D3KooWQv2KCogXS3qmJL1ND1gPMzmRwiGAtEAEsMSMmW4G9L4c',
   ],
   gossipResults: true,
   relay: null,

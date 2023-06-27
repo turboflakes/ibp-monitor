@@ -37,7 +37,7 @@ import { config as configLocal } from './config/config.local.js'
 const cfg = Object.assign(config, configLocal)
 
 const queueOpts = {
-  connection: new IORedis(cfg.redis),
+  connection: new IORedis(cfg.redis)
 }
 const jobRetention = {
   timeout: 60 * 1000, // active jobs timeout after 60 seconds
@@ -145,6 +145,8 @@ const ae = new AlertsEngine({ datastore: ds})
     connectionEncryption: [new noise()],
     connectionManager: {
       autoDial: true,
+      minConnections: 3, // does this force a reconnect?
+      maxConnections: 10,
     },
     peerDiscovery: [
       mdns({
@@ -232,22 +234,32 @@ const ae = new AlertsEngine({ datastore: ds})
   const checkServiceEvents = new QueueEvents('checkService', queueOpts)
   const handleCheckServiceResult = async ({ jobId }) => {
     const job = await Job.fromId(checkServiceQueue, jobId)
-    console.log('handleCheckServiceResult', jobId, job.returnvalue)
+    console.log('handleCheckServiceResult', jobId, JSON.stringify(job.returnvalue))
     if (!job.returnvalue) {
       return
     }
     const { member, service } = job.data
     const result = job.returnvalue
+    // we could get hc for monitor that has not connected yet
+    if (result.monitorId) {
+      let monitor = await ds.Monitor.upsert({ id: result.monitorId, multiaddress: [], status: 'active' }, { fields: ['status'] });
+    }
     // upsert member service node
     if (result.peerId) {
       let memberService = await ds.MemberService.findOne({ where: { serviceId: service.id } })
+      // FIXME: we need to add a memberService from the memnbers.json file
+      if (!memberService) { 
+        console.error('No memberService for', member.id, service.id);
+        return;
+      }
       await ds.MemberServiceNode.upsert({
         peerId: result.peerId,
         serviceId: service.id,
         memberId: member.id,
         memberServiceId: memberService.id,
         name: null,
-      })
+        status: 'active',
+      }, { fields: ['status'] })
     }
     
     // insert health check
@@ -260,6 +272,8 @@ const ae = new AlertsEngine({ datastore: ds})
         '/ibp/healthCheck',
         uint8ArrayFromString(JSON.stringify(result))
       )
+      // debug recipient list
+      console.debug(res)
     }
 
     // run alert engine rules
