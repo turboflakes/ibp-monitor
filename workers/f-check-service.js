@@ -1,35 +1,12 @@
 'use strict'
 
-import dns from 'node:dns'
-import edns from 'evil-dns'
 import { ApiPromise, WsProvider } from '@polkadot/api'
 import { serializeError } from 'serialize-error'
 
 import { config } from '../config/config.js'
 import { config as configLocal } from '../config/config.local.js'
+import { setDNS, clearDNS, getDomain, getEndpoint } from '../lib/dns.js'
 const cfg = Object.assign(config, configLocal)
-
-// eDns has patched node:dns and not node:dns/promises
-async function lookupAsync(domain) {
-  return new Promise((resolve, reject) => {
-    dns.lookup(domain, (err, address, family) => {
-      if (err) reject(err)
-      resolve({ address, family })
-    })
-  })
-}
-
-const setDNS = async (domain, ip) => {
-  edns.add(domain, ip)
-  var { address } = await lookupAsync(domain)
-  console.debug(`${domain} now resolves to ${address}, and should be ${ip}`)
-}
-const clearDNS = async (domain, ip) => {
-  console.log(`removing eDns for ${domain}`)
-  edns.remove(domain, ip)
-  var { address } = await lookupAsync(domain)
-  console.log(`${domain} now resolves to ${address}\n`)
-}
 
 class TimeoutException extends Error {
   constructor(message) {
@@ -38,16 +15,13 @@ class TimeoutException extends Error {
   }
 }
 
-const getDomain = (subdomain = 'rpc') => `${subdomain}.dotters.network`
-const getEndpoint = (subdomain = 'rpc', chain = 'polkadot') => `wss://${getDomain(subdomain)}/${chain}`
-
 const performCheck = async (job) => {
   const { subdomain, member, service, monitorId } = job.data
   console.debug('[worker] checkService', subdomain, member.id, service.id)
 
   const endpoint = getEndpoint(subdomain, service.chainId)
 
-  job.log(`checkService: ${endpoint}, ${member.id}, ${service.id}`)
+  console.log(`checkService: ${endpoint}, ${member.id}, ${service.id}`)
 
   const provider = new WsProvider(endpoint, false, {}, 10 * 1000) // 10 seconds timeout
   // any error is 'out of context' in the handler and does not stop the `await provider.isReady`

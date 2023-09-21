@@ -20,6 +20,7 @@ import { DataStore } from './data/data-store.js'
 import { MessageHandler } from './lib/message-handler.js'
 import { HealthChecker } from './lib/health-checker.js'
 import { AlertsEngine } from './lib/alerts-engine.js'
+import { lookupAsync, getDomain } from './lib/dns.js'
 
 import { Job, QueueEvents, Queue } from 'bullmq'
 import { isIPv4, isIPv6 } from 'is-ip'
@@ -298,11 +299,21 @@ const ae = new AlertsEngine({ datastore: ds})
       include: ['membershipLevel'],
     })
 
+
+
     for (let service of services) {
       for (let member of members) {
         if (member.membershipLevelId < service.membershipLevelId) {
           continue
         }
+
+        if (!cfg.checkOwnServices) { 
+          var { address } = await lookupAsync(getDomain(service.membershipLevel.subdomain))
+          if (address === member.serviceIpAddress) {
+            continue
+          }
+        }
+
         const activeJobs = await checkServiceQueue.getActive()
         const waitingJobs = await checkServiceQueue.getWaiting()
         const activeJob = activeJobs.find(
